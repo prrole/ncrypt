@@ -15,7 +15,7 @@ int main(int argc, char** argv)
 {
      FILE *infile, *outfile;
      int DESoperation;
-     uLong  crc;
+     uLong  ecrc;
   
      DES_cblock key;
      DES_key_schedule schedule;
@@ -49,7 +49,7 @@ int main(int argc, char** argv)
 
      if(!(outfile=fopen(argv[3],"wb")))
      {
-	  printf("%s could not be opened\n",argv[2]);
+	  printf("%s could not be opened for writing\n",argv[2]);
 	  exit(-1);
      }
      if(DESoperation==DES_DECRYPT)
@@ -60,22 +60,28 @@ int main(int argc, char** argv)
 
      // housekeeping done, start the real stuff
 
-     crc = crc32(0L, Z_NULL, 0);  // initialize crc value to 0
+     ecrc = crc32(0L, Z_NULL, 0);  // initialize crc value to 0
      reverse(key); // we need to reverse the key
      DES_set_key_unchecked(&key, &schedule);  // initialize des key
 
      while (fread(inbuf,1,8,infile))   // read input, 8 bytes at a time
      {
-	  reverse(inbuf); //we need to reverse the input data 
-	  DES_ecb_encrypt(&inbuf, &outbuf,&schedule,DESoperation);
+
+
+	  if(DESoperation==DES_DECRYPT)
+	       ecrc=crc32(ecrc,inbuf,8);      //crc32 of encrypted data
+
+	  reverse(inbuf); //we need to reverse the input data
+	  DES_ecb_encrypt(&inbuf, &outbuf,&schedule,DESoperation); // encrypt or decrypt data
 	  reverse(outbuf); //we need to reverse the output data
+
 	  if(DESoperation==DES_ENCRYPT)
-	       crc=crc32(crc,outbuf,8);      //crc32 of encrypted output
+	       ecrc=crc32(ecrc,outbuf,8);      //crc32 of encrypted data
+
 	  fwrite(outbuf,1,8,outfile);
      }
-     crc^=0xffffffff;
-     if(DESoperation==DES_ENCRYPT)
-	  printf("bootfile CRC32 value: %x\n",endianswap(crc));
+     ecrc^=0xffffffff;
+     printf("Encrypted image CRC32 Bxx.BIN format: [%x], TransferGame format: [%x]\n",endianswap(ecrc),ecrc);
 
      fclose(infile);
      fclose(outfile);
