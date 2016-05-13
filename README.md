@@ -1,5 +1,5 @@
 # ncrypt
-Small utility to turn encrypt/decrypt NAOMI binary files
+Small utility to encrypt/decrypt NAOMI binary files
 
 Wrote this quite some time back when I was playing with the Naomi system.  I had a couple of versions of this floating around, and it may be of interest to others - so putting it up on GitHub for safekeeping.
 
